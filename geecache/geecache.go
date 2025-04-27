@@ -1,4 +1,4 @@
-package cache
+package geecache
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// A Group is a cache namespace and associated data loaded spread over
+// A Group is a geecache namespace and associated data loaded spread over
 type Group struct {
 	name      string
 	getter    Getter
@@ -56,7 +56,7 @@ func GetGroup(name string) *Group {
 	return g
 }
 
-// Get value for a key from cache
+// Get value for a key from geecache
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
 		return ByteView{}, fmt.Errorf("key is required")

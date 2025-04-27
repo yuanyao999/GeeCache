@@ -1,7 +1,7 @@
-package cache
+package geecache
 
 import (
-	"github.com/yuanyao999/GeeCache/cache/lru"
+	"github.com/yuanyao999/GeeCache/geecache/lru"
 	"sync"
 )
 

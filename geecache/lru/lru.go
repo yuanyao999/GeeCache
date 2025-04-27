@@ -2,7 +2,7 @@ package lru
 
 import "container/list"
 
-// Cache is a LRU cache. It is not safe for concurrent access.
+// Cache is a LRU geecache. It is not safe for concurrent access.
 type Cache struct {
 	maxBytes int64
 	nbytes   int64
@@ -32,7 +32,7 @@ func New(maxBytes int64, onEvicted func(string, Value)) *Cache {
 	}
 }
 
-// Add adds a value to the cache.
+// Add adds a value to the geecache.
 func (c *Cache) Add(key string, value Value) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
@@ -49,7 +49,7 @@ func (c *Cache) Add(key string, value Value) {
 	}
 }
 
-// Get look ups a key's value
+// Get look-ups a key's value
 func (c *Cache) Get(key string) (value Value, ok bool) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
@@ -73,7 +73,7 @@ func (c *Cache) RemoveOldest() {
 	}
 }
 
-// Len the number of cache entries
+// Len the number of geecache entries
 func (c *Cache) Len() int {
 	return c.ll.Len()
 }
