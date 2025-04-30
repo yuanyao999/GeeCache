@@ -1,91 +1,149 @@
-# GeeCache
+# 🧠 GeeCache - A Simple Distributed Caching System in Go
 
-GeeCache is a simple distributed in-memory cache system implemented in Go, inspired by groupcache and Redis.  
-It is built as part of a hands-on learning project from the **7 days Golang series**.
+GeeCache is a lightweight, distributed caching system implemented in Go, inspired by [GroupCache](https://github.com/golang/groupcache). It supports peer-to-peer communication, consistent hashing, local memory caching, and automatic data loading from a fallback source (like a database).
 
-## Features
+> 🚀 Designed and built from scratch for educational and practical use, following [7days-Golang](https://geektutu.com/post/geek-golang.html).
 
-- **In-Memory Caching**: Fast access to frequently used data with LRU eviction policy.
-- **Peer-to-Peer Nodes**: Supports multiple nodes communicating via HTTP.
-- **Consistent Hashing**: Automatic load balancing across nodes.
-- **Flexible Loader API**: Support for custom data loading when cache miss occurs.
-- **Minimal Dependency**: Pure Go standard library implementation.
+---
 
-## Project Structure
+## 📌 Features
+
+- 🔗 **Consistent Hashing** for distributing keys across nodes
+- 🧱 **Local in-memory cache** with optional LRU eviction (in `lru.go`)
+- 🔄 **Peer communication** via HTTP/gRPC to retrieve cache entries
+- 🐢 **SlowDB simulation** to demonstrate lazy loading and caching
+- 📦 **Modular design** for easy extension and testing
+
+---
+
+## 🗂️ Project Structure
 
 ```
-gee-cache/
-├── byteview.go      # Encapsulate bytes data
-├── cache.go         # LRU cache and cache group logic
-├── geecache.go      # Main cache API (group, getter)
-├── http.go          # HTTP server/client for peer communication
-├── lru/             # LRU cache module
-├── singleflight/    # Prevent cache stampede
-└── README.md        # Documentation
+GeeCache/
+├── geecache/            # Core caching logic (Group, LRU, PeerPicker, HTTP pool)
+│   ├── cache.go
+│   ├── lru.go
+│   ├── group.go
+│   ├── peers.go
+│   └── http.go
+├── geecachepb/          # gRPC proto definitions and generated files
+│   ├── geecachepb.proto
+│   ├── geecachepb.pb.go
+│   └── geecachepb_grpc.pb.go
+├── run.sh               # One-click startup script for 3 nodes + API server
+├── go.mod
+├── go.sum
+└── README.md
 ```
 
-## Installation
+---
 
-Make sure you have Go installed (1.18+ recommended).
+## 🚀 Quick Start
+
+### 1. Clone the repo
 
 ```bash
-git clone https://github.com/geektutu/7days-golang.git
-cd 7days-golang/gee-cache
-go mod tidy
+git clone https://github.com/yuanyao999/GeeCache.git
+cd GeeCache
 ```
 
-## Quick Start
-
-1. Start multiple cache server nodes:
+### 2. Generate Protobuf (if modified)
 
 ```bash
-cd 7days-golang/gee-cache
-go run main.go -port=8001
-go run main.go -port=8002
-go run main.go -port=8003
+cd geecachepb
+protoc --go_out=. --go-grpc_out=. --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative geecachepb.proto
+cd ..
 ```
 
-2. Start an API server to access the cache:
+### 3. Run all servers
 
 ```bash
-go run main.go -port=9999 -api=true
+./run.sh
 ```
 
-3. Query the cache using curl:
+This will:
+- Compile the server
+- Start 3 cache nodes on ports `8001`, `8002`, `8003`
+- Start a frontend API server on `localhost:9999`
+
+### 4. Test the cache
 
 ```bash
 curl "http://localhost:9999/api?key=Tom"
 ```
 
-If `Tom` is not cached, the system will fetch it from a simulated database and cache it for subsequent requests.
+Expected logs:
 
-## Demo
-
-Here is a simple demo diagram:
-
-```
-Client --> API Server --> GeeCache Group
-                        --> Node 1
-                        --> Node 2
-                        --> Node 3
+```log
+[Server http://localhost:8001] GET /_geecache/scores/Tom
+[SlowDB] search key Tom
+[GeeCache] hit
 ```
 
-- If a node has the key, it returns it.
-- If not, the node loads the key from the "database" and caches it.
+---
 
-## Why GeeCache?
+## 📖 How It Works
 
-- To understand distributed caching mechanisms
-- To practice Go concurrency patterns
-- To learn consistent hashing and peer management
-- Lightweight and self-contained codebase
+1. `Group` is the core of GeeCache. It maintains a main cache and handles data retrieval.
+2. If a key is not found in local memory, it either:
+    - Fetches it from a peer via HTTP/gRPC
+    - Or calls the `Getter` function to load it (e.g., from SlowDB)
+3. Retrieved data is stored in local cache and returned.
 
-## Future Work
+---
 
-- Add gRPC support for peer communication
-- Add TTL (Time To Live) support for cache expiration
-- Add monitoring metrics
+## 🛠️ Example: Adding a New Key
 
-## License
+You can simulate dynamic key loading and see peer selection via consistent hashing by accessing:
 
-MIT License. See [LICENSE](../LICENSE) for details.
+```bash
+curl "http://localhost:9999/api?key=Sam"
+curl "http://localhost:9999/api?key=Jack"
+```
+
+---
+
+## 🧪 Test Output
+
+Example test run:
+```bash
+$ ./run.sh
+
+>> Starting cache servers...
+geecache is running at http://localhost:8001
+...
+>> Sending test requests
+[SlowDB] search key Tom
+[GeeCache] hit
+[GeeCache] hit
+```
+
+---
+
+## 📦 Dependencies
+
+- Go ≥ 1.17
+- Protobuf compiler (`protoc`)
+- `google.golang.org/protobuf`
+- `google.golang.org/grpc`
+
+Install protoc plugins if you haven't:
+
+```bash
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+```
+
+---
+
+## 🙋 About
+
+This project was implemented from scratch as part of a Go learning journey.  
+Maintained by [@yuanyao999](https://github.com/yuanyao999).  
+Based on ideas from [geektutu's 7days-Golang](https://github.com/geektutu/7days-golang).
+
+---
+
+## 📄 License
+
+MIT License. See [`LICENSE`](LICENSE) file for details.
